@@ -50,32 +50,65 @@ function convertXlsx(inPath, outPath) {
     fs.writeFileSync(outPath, md, "utf-8");
 }
 
+function collectText(node, out) {
+    if (!node) return;
+
+    if (typeof node === "string") return;
+
+    if (Array.isArray(node)) {
+        for (const v of node) collectText(v, out);
+        return;
+    }
+
+    if (typeof node === "object") {
+        // PowerPoint の実テキストは a:t に入っている
+        if (node["a:t"]) {
+            const arr = node["a:t"];
+            for (const v of arr) {
+                if (typeof v === "string") {
+                    out.push(v);
+                } else if (v && typeof v._ === "string") {
+                    out.push(v._);
+                }
+            }
+        }
+
+        for (const v of Object.values(node)) {
+            collectText(v, out);
+        }
+    }
+}
+
 async function convertPptx(inPath, outPath) {
     const parser = new PPTX2Json();
     const json = await parser.toJson(inPath);
 
+    // slide*.xml だけを対象にする
+    const slideEntries = Object.entries(json)
+        .filter(([k]) => k.startsWith("ppt/slides/slide") && k.endsWith(".xml"))
+        .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }));
+
     let md = "";
 
-    const slides = Object.values(json);
+    for (let i = 0; i < slideEntries.length; i++) {
+        const [, slideObj] = slideEntries[i];
 
-    if (slides.length === 0) {
-        md += "# (No slides found)\n\n";
-    }
+        const texts = [];
+        collectText(slideObj, texts);
 
-    slides.forEach((slide, i) => {
         md += `# Slide ${i + 1}\n\n`;
-
-        if (slide && Array.isArray(slide.texts)) {
-            slide.texts.forEach(t => {
-                if (t && typeof t.text === "string") {
-                    md += `${t.text}\n\n`;
-                }
-            });
+        if (texts.length === 0) {
+            md += "(no text)\n\n";
+        } else {
+            for (const t of texts) {
+                md += t + "\n\n";
+            }
         }
-    });
+    }
 
     fs.writeFileSync(outPath, md, "utf-8");
 }
+
 
 
 
