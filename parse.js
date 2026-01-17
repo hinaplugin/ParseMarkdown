@@ -4,7 +4,7 @@ import path from "path";
 import mammoth from "mammoth";
 import TurndownService from "turndown";
 import XLSX from "xlsx";
-import pptx2json from "pptx2json";
+import PPTX2Json from "pptx2json";
 
 const inDir = path.resolve("file");
 const outDir = path.resolve("out");
@@ -51,7 +51,8 @@ function convertXlsx(inPath, outPath) {
 }
 
 async function convertPptx(inPath, outPath) {
-    const json = await pptx2json(inPath);
+    const parser = new PPTX2Json();
+    const json = await parser.toJson(inPath);
     let md = "";
 
     json.slides.forEach((slide, i) => {
