@@ -53,17 +53,35 @@ function convertXlsx(inPath, outPath) {
 async function convertPptx(inPath, outPath) {
     const parser = new PPTX2Json();
     const json = await parser.toJson(inPath);
+
     let md = "";
 
-    json.slides.forEach((slide, i) => {
+    const slides =
+        Array.isArray(json.slides)
+            ? json.slides
+            : json.slides
+                ? Object.values(json.slides)
+                : [];
+
+    if (slides.length === 0) {
+        md += "# (No slides found)\n\n";
+    }
+
+    slides.forEach((slide, i) => {
         md += `# Slide ${i + 1}\n\n`;
-        slide.texts.forEach(t => {
-            md += `${t.text}\n\n`;
-        });
+
+        if (Array.isArray(slide.texts)) {
+            slide.texts.forEach(t => {
+                if (t && t.text) {
+                    md += `${t.text}\n\n`;
+                }
+            });
+        }
     });
 
     fs.writeFileSync(outPath, md, "utf-8");
 }
+
 
 async function convertAll() {
     const files = fs.readdirSync(inDir)
