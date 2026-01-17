@@ -43,7 +43,7 @@ data/
 プロジェクトのルートで以下を実行します。
 
 ```bash
-npm install mammoth turndown xlsx pptx2json
+npm install
 ```
 Node.js は v18 以降 を推奨します。
 
