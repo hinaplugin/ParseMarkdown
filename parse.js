@@ -56,12 +56,7 @@ async function convertPptx(inPath, outPath) {
 
     let md = "";
 
-    const slides =
-        Array.isArray(json.slides)
-            ? json.slides
-            : json.slides
-                ? Object.values(json.slides)
-                : [];
+    const slides = Object.values(json);
 
     if (slides.length === 0) {
         md += "# (No slides found)\n\n";
@@ -70,9 +65,9 @@ async function convertPptx(inPath, outPath) {
     slides.forEach((slide, i) => {
         md += `# Slide ${i + 1}\n\n`;
 
-        if (Array.isArray(slide.texts)) {
+        if (slide && Array.isArray(slide.texts)) {
             slide.texts.forEach(t => {
-                if (t && t.text) {
+                if (t && typeof t.text === "string") {
                     md += `${t.text}\n\n`;
                 }
             });
@@ -81,6 +76,7 @@ async function convertPptx(inPath, outPath) {
 
     fs.writeFileSync(outPath, md, "utf-8");
 }
+
 
 
 async function convertAll() {
